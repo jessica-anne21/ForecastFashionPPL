@@ -1,0 +1,53 @@
+:root{
+    --black: #262622;
+    --red: #A61C35;
+    --pink: #D97791;
+    --gradient: linear-gradient(90deg, var(--red), var(--pink));
+
+}
+
+body {
+    background-color: #ffe6f2;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #ffe6f2; 
+    font-family: Arial, sans-serif;
+}
+.navbar {
+    background-color: #ff69b4; 
+}
+.navbar-brand, .nav-link {
+    color: #fff !important;
+}
+.dashboard-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-container h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.dashboard-container h2 {
+    margin-bottom: 15px;
+}
+
+.dashboard-container .form-label {
+    font-weight: bold;
+}
+
+.btn-primary {
+    background-color: #ff69b4; 
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #ff1493; 
+}
