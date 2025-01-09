@@ -1,4 +1,7 @@
 <?php
+// Start the session to check if the user is logged in
+session_start();
+
 // Konfigurasi koneksi database
 $host = "localhost";
 $user = "root";
@@ -14,14 +17,49 @@ if ($conn->connect_error) {
 
 // Tambahkan komentar jika form disubmit
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_comment'])) {
+    // Cek apakah pengguna sudah login
+    if (!isset($_SESSION['user_id'])) {
+        // Redirect ke halaman login jika belum login
+        header('Location: login.php');
+        exit();
+    }
+
+    // Ambil data dari form komentar
     $article_id = $_POST['article_id'];
-    $name = htmlspecialchars($_POST['name']);
+    $username = $_SESSION['user_name']; // Mengambil username dari session
     $content = htmlspecialchars($_POST['content']);
 
+    // Menyimpan komentar ke database
     $stmt = $conn->prepare("INSERT INTO comments (article_id, name, content) VALUES (?, ?, ?)");
-    $stmt->bind_param("iss", $article_id, $name, $content);
+    $stmt->bind_param("iss", $article_id, $username, $content);
     $stmt->execute();
     $stmt->close();
+}
+
+// Hapus komentar jika tombol hapus ditekan
+if (isset($_GET['delete_comment'])) {
+    // Cek apakah pengguna sudah login
+    if (!isset($_SESSION['user_id'])) {
+        header('Location: login.php');
+        exit();
+    }
+
+    // Ambil ID komentar yang akan dihapus
+    $comment_id = $_GET['delete_comment'];
+
+    // Pastikan komentar yang dihapus adalah milik pengguna yang login
+    $username = $_SESSION['user_name'];
+
+    // Hapus komentar dari database
+    $delete_sql = "DELETE FROM comments WHERE comment_id = ? AND name = ?";
+    $stmt = $conn->prepare($delete_sql);
+    $stmt->bind_param("is", $comment_id, $username);
+    $stmt->execute();
+    $stmt->close();
+
+    // Redirect untuk mencegah form resubmit
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
 }
 
 // Ambil data artikel dari database
@@ -43,6 +81,49 @@ $result = $conn->query($sql);
             padding: 0;
             background-color: #f9f9f9;
             color: #333;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: rgba(255, 111, 145, 0.9);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 10px 10px;
+        }
+        .navbar .logo {
+            font-size: 1.6rem;
+            color: #fff;
+            font-weight: bold;
+            text-decoration: none;
+            transition: color 0.3s ease-in-out;
+        }
+        .navbar .logo:hover {
+            color: #ff4676;
+        }
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 15px;
+            margin: 0;
+            padding: 10px;
+        }
+        .nav-links li {
+            display: inline;
+        }
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: color 0.3s ease-in-out;
+        }
+        .nav-links a:hover {
+            color: #ff4676;
         }
         .container {
             max-width: 900px;
@@ -111,9 +192,25 @@ $result = $conn->query($sql);
         .comment strong {
             color: #ff6f91;
         }
+        .delete-btn {
+            color: red;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
+    <nav class="navbar">
+        <a href="#" class="logo">ForecastFashion</a>
+        <ul class="nav-links">
+            <li><a href="location.php">Cari Lokasi</a></li>
+            <li><a href="article.php">Article</a></li>
+            <!-- <li><a href="user/login.php"><i class="fas fa-user"></i> User Login</a></li> -->
+        </ul>
+    </nav>
+    
+    <!-- Main Content -->
     <div class="container">
         <h1>Articles</h1>
         <?php
@@ -132,7 +229,7 @@ $result = $conn->query($sql);
                 echo '<h3>Comments</h3>';
 
                 // Ambil komentar dari database
-                $comment_sql = "SELECT name, content, created_at FROM comments WHERE article_id = $article_id ORDER BY created_at DESC";
+                $comment_sql = "SELECT comment_id, name, content, created_at FROM comments WHERE article_id = $article_id ORDER BY created_at DESC";
                 $comment_result = $conn->query($comment_sql);
 
                 if ($comment_result->num_rows > 0) {
@@ -142,18 +239,22 @@ $result = $conn->query($sql);
                         echo '<strong>' . htmlspecialchars($comment['name']) . ':</strong> ';
                         echo '<p>' . htmlspecialchars($comment['content']) . '</p>';
                         echo '<time>' . date("F j, Y, g:i a", strtotime($comment['created_at'])) . '</time>';
-                        echo '</div>';
+
+                        // Tampilkan tombol hapus jika komentar milik pengguna yang login
+                        if (isset($_SESSION['user_name']) && $_SESSION['user_name'] === $comment['name']) {
+                            echo '<a href="?delete_comment=' . $comment['comment_id'] . '" class="delete-btn">Delete</a>';
+                        }
+                        
                     }
                     echo '</div>';
                 } else {
                     echo '<p>No comments yet.</p>';
                 }
 
-                // Form komentar
+                // Form komentar tanpa input nama
                 echo '<div class="comment-form">';
                 echo '<form method="post">';
                 echo '<input type="hidden" name="article_id" value="' . $article_id . '">';
-                echo '<input type="text" name="name" placeholder="Your name" required>';
                 echo '<textarea name="content" rows="4" placeholder="Your comment" required></textarea>';
                 echo '<button type="submit" name="submit_comment">Submit Comment</button>';
                 echo '</form>';
