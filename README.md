@@ -29,6 +29,6 @@
 1. **Clone Repository:**
    ```bash
    git clone [https://github.com/jessica-anne21/forecastfashionppl.git](https://github.com/jessica-anne21/forecastfashionppl.git)
-2. **Setup Database**: Impor file fashion.sql ke MySQL Anea. Pastikan nama database adalah `fashion`.
+2. **Setup Database**: Impor file fashion.sql ke MySQL Anda. Pastikan nama database adalah `fashion`.
 3. **Konfigurasi Koneksi**: Sesuaikan kredensial database di file includes/db.php.
 4. **Jalankan**: Masukkan folder proyek ke dalam htdocs (XAMPP) dan akses melalui browser.
